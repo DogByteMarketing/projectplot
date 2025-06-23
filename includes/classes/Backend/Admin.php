@@ -169,7 +169,7 @@ class Admin {
     $option = Utils::get_option('clickup', 'token');
     ?>
     <input type="password" name="projectplot_settings_dogbytemarketing[clickup][token]" id="token" value="<?php echo esc_html($option); ?>" />
-    <p><?php esc_html_e("Enter the Token found in your ", 'projectplot'); ?><a href="https://www.dogbytemarketing.com/my-account/projectplot/" target="_blank"><?php esc_html_e("ProjectPlot", 'projectplot'); ?></a> <?php esc_html_e("dashboard.", 'projectplot'); ?></p>
+    <p><?php esc_html_e("Enter the Token found in your ", 'projectplot'); ?><a href="https://www.dogbytemarketing.com/my-account/project-management/" target="_blank"><?php esc_html_e("ProjectPlot", 'projectplot'); ?></a> <?php esc_html_e("dashboard.", 'projectplot'); ?></p>
 		<?php
 	}
 

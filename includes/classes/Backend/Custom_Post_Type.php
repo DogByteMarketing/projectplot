@@ -23,8 +23,7 @@ class Custom_Post_Type {
   public function init() {
     add_action('init', array($this, 'create_task_post_type'));
     add_action('add_meta_boxes', array($this, 'add_meta_boxes'));
-    add_action('save_post_task', array($this, 'save_priority_meta_box'));
-    add_action('save_post_task', array($this, 'save_status_meta_box'));
+    add_action('save_post_task', array($this, 'maybe_send_to_clickup'), 20, 2);
     add_filter('manage_task_posts_columns', array($this, 'add_task_columns'));
     add_action('manage_task_posts_custom_column', array($this, 'render_task_columns'), 10, 2);
     add_action('quick_edit_custom_box', array($this, 'quick_edit_custom_box'), 10, 2);
@@ -34,7 +33,6 @@ class Custom_Post_Type {
     add_action('pre_get_posts', array($this, 'exclude_complete_from_all_view'));
     add_action('pre_get_posts', array($this, 'orderby_priority'), 99);
     add_filter('manage_edit-task_sortable_columns', array($this, 'make_priority_sortable'));
-    add_action('save_post_task', array($this, 'maybe_send_to_clickup'), 20, 2);
     add_action('before_delete_post', array($this, 'maybe_remove_from_clickup'));
     add_action('trashed_post', array($this, 'maybe_remove_from_clickup'));
   }
@@ -138,68 +136,6 @@ class Custom_Post_Type {
       <option value="complete" <?php selected($value, 'complete'); ?>>Complete</option>
     </select>
     <?php
-  }
-  
-  /**
-   * Save task meta data
-   *
-   * @param  mixed $post_id
-   * @return void
-   */
-  public function save_priority_meta_box($post_id) {
-    // Prevent auto-saves and revisions
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-      return;
-    }
-
-    if (wp_is_post_revision($post_id)) {
-      return;
-    }
-
-    Log::debug("Saving Meta Boxes");
-
-    if (!isset($_POST['task_meta_priority_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['task_meta_priority_nonce'])), 'add_task_priority')) {
-      return;
-    }
-
-    if (array_key_exists('task_priority', $_POST)) {
-      $task_priority = sanitize_text_field(wp_unslash($_POST['task_priority']));
-
-      Log::debug("Setting task priority for {$post_id} to {$task_priority}");
-
-      update_post_meta($post_id, '_task_priority', $task_priority);
-    }
-  }
-  
-  /**
-   * Save task meta data
-   *
-   * @param  mixed $post_id
-   * @return void
-   */
-  public function save_status_meta_box($post_id) {
-    // Prevent auto-saves and revisions
-    if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
-      return;
-    }
-
-    if (wp_is_post_revision($post_id)) {
-      return;
-    }
-
-    Log::debug("Saving Meta Boxes");
-
-    if (!isset($_POST['task_meta_status_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['task_meta_status_nonce'])), 'add_task_status')) {
-      return;
-    }
-
-    if (array_key_exists('task_status', $_POST)) {
-      $task_status = sanitize_text_field(wp_unslash($_POST['task_status']));
-      
-      Log::debug("Setting task status for {$post_id} to {$task_status}");
-
-      update_post_meta($post_id, '_task_status', $task_status);
-    }
   }
 
   /**
@@ -524,14 +460,38 @@ class Custom_Post_Type {
     if (wp_is_post_revision($post_id)) {
       return;
     }
-    
-    if (!isset($_POST['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_wpnonce'])))) {
-      return;
-    }
   
     // Only trigger on publish (skip drafts, pending, etc.)
     if ($post->post_status !== 'publish') {
       return;
+    }
+
+    if (!isset($_POST['task_meta_priority_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['task_meta_priority_nonce'])), 'add_task_priority')) {
+      return;
+    }
+
+    if (!isset($_POST['task_meta_status_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['task_meta_status_nonce'])), 'add_task_status')) {
+      return;
+    }
+
+    Log::debug("Saving Priority");
+
+    if (array_key_exists('task_priority', $_POST)) {
+      $task_priority = sanitize_text_field(wp_unslash($_POST['task_priority']));
+
+      Log::debug("Setting task priority for {$post_id} to {$task_priority}");
+
+      update_post_meta($post_id, '_task_priority', $task_priority);
+    }
+
+    Log::debug("Saving Status");
+
+    if (array_key_exists('task_status', $_POST)) {
+      $task_status = sanitize_text_field(wp_unslash($_POST['task_status']));
+      
+      Log::debug("Setting task status for {$post_id} to {$task_status}");
+
+      update_post_meta($post_id, '_task_status', $task_status);
     }
 
     $task_id  = get_post_meta($post_id, '_task_id', true);
@@ -541,7 +501,7 @@ class Custom_Post_Type {
     $status   = isset($_POST['task_status']) ? sanitize_text_field(wp_unslash($_POST['task_status'])) : '';
 
     $task    = array(
-      'task_id'     => $task_id,
+      'task_id'     => $task_id ? $task_id : '',
       'title'       => $title,
       'description' => $content,
       'priority'    => $priority,
@@ -573,32 +533,21 @@ class Custom_Post_Type {
    * @return void
    */
   public function maybe_remove_from_clickup($post_id) {
-    if (!isset($_POST['_wpnonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['_wpnonce'])))) {
-      return;
-    }
-
     if (get_post_type($post_id) !== 'task') {
       return;
     }
 
-    $post     = get_post($post_id);
     $task_id  = get_post_meta($post_id, '_task_id', true);
-    $title    = isset($post->post_title) ? $post->post_title : '';
-    $content  = $post->post_content ? $post->post_content : '';
-    $priority = isset($_POST['task_priority']) ? sanitize_text_field(wp_unslash($_POST['task_priority'])) : '';
-    $status   = isset($_POST['task_status']) ? sanitize_text_field(wp_unslash($_POST['task_status'])) : '';
 
-    $task    = array(
-      'task_id'     => $task_id,
-      'title'       => $title,
-      'description' => $content,
-      'priority'    => $priority,
-      'status'      => isset($this->statuses[$status]) ? $this->statuses[$status] : '',
-    );
+    if ($task_id) {
+      $task    = array(
+        'task_id'     => $task_id,
+      );
 
-    $clickup     = new ClickUp();
+      $clickup = new ClickUp();
 
-    $clickup->maybe_delete_clickup_task($task);
+      $clickup->maybe_delete_clickup_task($task);
+    }
   }
   
 }
