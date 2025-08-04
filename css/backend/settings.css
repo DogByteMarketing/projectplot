@@ -1,0 +1,259 @@
+#wpcontent {
+  padding-left: 0;
+}
+
+@media (min-width: 1200px) {
+  .container{
+    max-width: 1800px!important;
+  }
+}
+
+h1 {
+  font-size: x-large!important;
+  margin: 40px 0!important;
+  text-align: center;
+}
+
+input[type="text"], input[type="number"], input[type="email"], input[type="password"], select {
+  width: 100%!important;
+}
+
+input[type="range"] {
+  width: 95%!important;
+}
+
+.tabs h2 {
+  font-size: x-large;
+  margin: 0;
+  line-height: normal;
+  border-bottom: 1px solid #F0F0F1;
+  padding: 10px;
+  text-align: center;
+}
+
+.tabs p {
+  font-weight: 700;
+}
+
+.ctas h2 {
+  font-size: 22px!important;
+}
+
+.form-table {
+  margin: 0;
+}
+
+.nav-links ul {
+  background-color: #fff;
+  padding: 20px!important;
+  border-radius: 5px;
+  width: 100%;
+}
+
+.nav-links li:not(:last-child) {
+  margin-bottom: 10px;
+}
+
+.nav-links li:is(:last-child) {
+  margin-bottom: 0px;
+}
+
+.nav-links li a {
+  display: flex;
+  align-items: center;
+  font-size: 16px;
+  font-weight: 500;
+  color: #333;
+  padding: 12px 80px 12px 12px;
+  border-radius: 5px;
+  margin-bottom: 0;
+  text-decoration: none;
+}
+
+.nav-links li a:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.nav-links li a:hover {
+  color: #00607E;
+}
+
+.nav-links li a.active {
+  background-color: #333;
+  color: #fff;
+}
+
+.nav-links .bi {
+  margin-right: 10px;
+}
+
+.tab {
+  background-color: #fff;
+  border-radius: 5px;
+}
+
+.tab th {
+  border-right: 1px solid #F0F0F1;
+  vertical-align: middle
+}
+
+.tab th, .tab td {
+  padding: 20px;
+}
+
+.tab tr:not(:last-child) {
+  border-bottom: 1px solid #F0F0F1;
+}
+
+.ctas .cta {
+  background-color: #00607E;
+  text-align: center;
+  padding: 10px 20px;
+  color: #fff;
+  border-radius: 5px;
+  margin-bottom: 20px;
+}
+
+#submit {
+  margin-top: 20px;
+  padding: 5px 20px;
+  border-radius: 5px!important;
+}
+
+p.submit {
+  padding-top: 0!important;
+}
+
+.submit input {
+  background-color: #00607E!important;
+  border-color: #00607E!important;
+}
+
+/* Bootstrap Begin */
+.bootstrap-wrapper {
+  overflow-x: hidden;
+}
+
+input[type="checkbox"] {
+  border-radius: 5px!important;
+}
+
+select, input {
+  border-top-right-radius: 5px!important;
+  border-bottom-right-radius: 5px!important;
+}
+
+.wp-core-ui select {
+  max-width: 100%;
+}
+
+.input-group:not(:last-child) {
+  margin-bottom: 1.2rem;
+}
+
+.form-group:not(:last-child) {
+  margin-bottom: 1.2rem;
+}
+
+input[type=checkbox]:focus, input[type=color]:focus, input[type=date]:focus, input[type=datetime-local]:focus, input[type=datetime]:focus, input[type=email]:focus, input[type=month]:focus, input[type=number]:focus, input[type=password]:focus, input[type=radio]:focus, input[type=search]:focus, input[type=tel]:focus, input[type=text]:focus, input[type=time]:focus, input[type=url]:focus, input[type=week]:focus, select:focus, textarea:focus {
+  border-color: #00607E!important;
+  box-shadow: none!important;
+}
+
+.bootstrap-wrapper {
+  margin: 0 15px 0 15px;
+}
+
+.credit {
+  text-align: center;
+  margin: 0 5px;
+}
+
+.credit a {
+  color: #00607E;
+  text-decoration: none;
+}
+
+input[role=switch]:checked {
+  background-color: #00607E!important;
+  border-color: #00607E!important;
+}
+
+a.btn.btn-primary {
+  background-color: #00607E!important;
+  border-color: #00607E!important;
+}
+
+a.btn.btn-secondary {
+  background-color: #6C757D!important;
+  border-color: #6C757D!important;
+}
+
+a.btn.btn-success {
+  background-color: #198754!important;
+  border-color: #198754!important;
+}
+
+a.btn.btn-danger {
+  background-color: #DC3545!important;
+  border-color: #DC3545!important;
+}
+
+a.btn.btn-warning {
+  background-color: #FFC107!important;
+  border-color: #FFC107!important;
+  color: #333!important;
+}
+
+a.btn.btn-info {
+  background-color: #00607E!important;
+  border-color: #00607E!important;
+  color: #333!important;
+}
+
+a.btn.btn-light {
+  background-color: #F8F9FA!important;
+  border-color: #F8F9FA!important;
+  color: #333!important;
+}
+
+a.btn.btn-dark {
+  background-color: #212529!important;
+  border-color: #212529!important;
+}
+/* Bootstrap End */
+
+.nav-links .icon {
+  margin-right: 10px;
+}
+
+.wp-editor-tabs {
+  position: relative;
+  top: 9px !important;
+}
+
+.wp-editor-container {
+  border: 1px solid #ddd !important;
+}
+
+.wp-editor-area {
+  border: none !important;
+}
+
+.wp-switch-editor {
+  margin: 0 !important;
+  padding: 2px 15px !important; /* Reduced top/bottom padding from 3px to 2px */
+  line-height: 1.4 !important;  /* Added to control text vertical position */
+  height: 25px !important;      /* Added to ensure consistent height */
+  border: 1px solid #ddd !important;
+}
+
+.subscription-notice {
+  color: #fff;
+  background-color: #DC3545;
+  padding: 20px;
+  text-align: center;
+  border-radius: 5px 5px 0 0;
+  font-weight: 700;
+}

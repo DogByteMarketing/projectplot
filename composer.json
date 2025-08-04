@@ -1,0 +1,10 @@
+{
+  "autoload": {
+      "psr-4": {
+          "DogByteMarketing\\ProjectPlot\\": "includes/classes/"
+      }
+  },
+  "scripts": {
+    "autoload": "composer dump-autoload"
+  }
+}
