@@ -1,8 +1,8 @@
 === ProjectPlot ===
 Contributors: dogbytemarketing
 Tags: project management, task tracking, team collaboration, project planner, productivity
-Tested up to: 6.8
-Stable tag: 1.0.1
+Tested up to: 6.9
+Stable tag: 1.1.0
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
@@ -61,6 +61,13 @@ This plugin uses third party services such as the connection to ClickUp via Dog 
 
 
 == Changelog ==
+
+= 1.1.0 =
+* Added: API so you can access tasks in other applications without going to the backend
+* Bugfix: Completed tasks not showing when filtering by Completed.
+
+= 1.0.1 =
+* Updated: Translations
 
 = 1.0.0 =
 * Initial Release

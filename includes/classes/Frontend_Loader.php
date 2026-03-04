@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Frontend\Enqueue;
 use DogByteMarketing\ProjectPlot\Frontend\UI;
 use DogByteMarketing\ProjectPlot\Frontend\WooCommerce;

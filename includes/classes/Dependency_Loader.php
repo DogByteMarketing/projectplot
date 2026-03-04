@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot;
 
+if (!defined('ABSPATH')) exit;
+
 class Dependency_Loader {
 
   /**

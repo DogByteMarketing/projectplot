@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Utils;
 
 class Log {

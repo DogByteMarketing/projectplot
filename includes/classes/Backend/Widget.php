@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot\Backend;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Utils;
 
 class Widget {
@@ -57,7 +59,7 @@ class Widget {
       'meta_query'     => array(
         array(
           'key'     => '_task_status',
-          'value'   => 'completed',
+          'value'   => 'complete',
           'compare' => '!=',
         ),
       ),
@@ -68,11 +70,12 @@ class Widget {
       return;
     }
   
-    // Build array with priorities
+    // Build array with status order (in_progress first) and priority
     $priority_order = array_keys($this->priorities); // Assumes order in Utils defines priority (highest to lowest)
     $tasks_with_priority = [];
   
     foreach ($all_tasks as $task) {
+      $status_key   = get_post_meta($task->ID, '_task_status', true);
       $priority_key = get_post_meta($task->ID, '_task_priority', true);
       $priority_index = array_search($priority_key, $priority_order);
   
@@ -80,14 +83,21 @@ class Widget {
         $priority_index = count($priority_order); // lowest if not found
       }
   
-      $tasks_with_priority[] = [
+      // In progress first (0), then to_do (1)
+      $status_order = ($status_key === 'in_progress') ? 0 : 1;
+  
+      $tasks_with_priority[] = array(
         'task'           => $task,
+        'status_order'   => $status_order,
         'priority_index' => $priority_index,
-      ];
+      );
     }
   
-    // Sort by priority index
+    // Sort: in progress first, then by priority (Urgent first; keys are 1=Urgent down to 4=Low)
     usort($tasks_with_priority, function ($a, $b) {
+      if ($a['status_order'] !== $b['status_order']) {
+        return $a['status_order'] - $b['status_order'];
+      }
       return $b['priority_index'] - $a['priority_index'];
     });
   

@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot\Backend;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Log;
 use DogByteMarketing\ProjectPlot\Utils;
 
@@ -69,6 +71,15 @@ class Admin {
 			'debug',                                            // Setting Id
 			__('Debug Mode', 'projectplot'),                 // Setting Label
 			array($this, 'debug_render'),                       // Setting callback
+			'projectplot_general_dogbytemarketing',        // Setting page
+			'projectplot_general_section_dogbytemarketing' // Setting section
+		);
+
+    // Add a setting for the API token for other API clients
+		add_settings_field(
+			'api_token',                                        // Setting Id
+			__('API Token', 'projectplot'), // Setting Label
+			array($this, 'api_token_render'),                    // Setting callback
 			'projectplot_general_dogbytemarketing',        // Setting page
 			'projectplot_general_section_dogbytemarketing' // Setting section
 		);
@@ -144,6 +155,19 @@ class Admin {
       <input type="checkbox" name="projectplot_settings_dogbytemarketing[general][debug]" class="form-check-input" id="debug" role="switch" <?php checked(1, $option, true); ?> /> <?php echo esc_html__('Yes', 'projectplot'); ?>
     </div>
     <p><?php esc_html_e("Logs can be found under", 'projectplot'); ?> /wp-content/uploads/projectplot/logs/</p>
+		<?php
+	}
+
+  /**
+	 * Render API Token Field (for VS Code extension)
+	 *
+	 * @return void
+	 */
+	public function api_token_render() {
+    $option = Utils::get_option('general', 'api_token');
+    ?>
+    <input type="text" name="projectplot_settings_dogbytemarketing[general][api_token]" id="api_token" value="<?php echo esc_attr($option); ?>" class="regular-text" />
+    <p><?php esc_html_e("Optional. Set a token here to enable API access to ProjectPlot for use in other applications so you can view / edit tasks without logging into WordPress. Leave blank to disable API access.", 'projectplot'); ?></p>
 		<?php
 	}
 
@@ -286,6 +310,10 @@ class Admin {
       $sanitary_values['general']['debug'] = $input['general']['debug'] === 'on' ? true : false;
     } else {
       $sanitary_values['general']['debug'] = false;
+    }
+
+    if (isset($input['general']['api_token'])) {
+      $sanitary_values['general']['api_token'] = sanitize_text_field($input['general']['api_token']);
     }
 
     if (isset($input['clickup']['email']) && $input['clickup']['email']) {

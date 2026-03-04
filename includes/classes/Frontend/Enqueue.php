@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot\Frontend;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Utils;
 
 class Enqueue {
