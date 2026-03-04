@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot\Backend;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Log;
 use DogByteMarketing\ProjectPlot\Utils;
 
@@ -53,8 +55,76 @@ class API {
       'callback'            => array($this, 'get_payload'),
       'permission_callback' => array($this, 'validate_token'),
     ));
+
+    register_rest_route('projectplot/v1', '/tasks', array(
+      'methods'             => 'GET',
+      'callback'            => array($this, 'get_tasks'),
+      'permission_callback' => array($this, 'validate_api_token'),
+      'args'                => array(
+        'status' => array(
+          'required'          => false,
+          'sanitize_callback' => 'sanitize_text_field',
+        ),
+      ),
+    ));
+
+    register_rest_route('projectplot/v1', '/tasks', array(
+      'methods'             => 'POST',
+      'callback'            => array($this, 'create_task'),
+      'permission_callback' => array($this, 'validate_api_token'),
+    ));
+
+    register_rest_route('projectplot/v1', '/tasks/(?P<id>\d+)', array(
+      'methods'             => 'GET',
+      'callback'            => array($this, 'get_task'),
+      'permission_callback' => array($this, 'validate_api_token'),
+      'args'                => array(
+        'id' => array(
+          'required'          => true,
+          'validate_callback' => function($param) { return is_numeric($param); },
+        ),
+      ),
+    ));
+
+    register_rest_route('projectplot/v1', '/tasks/(?P<id>\d+)', array(
+      'methods'             => 'PATCH',
+      'callback'            => array($this, 'update_task'),
+      'permission_callback' => array($this, 'validate_api_token'),
+      'args'                => array(
+        'id' => array(
+          'required'          => true,
+          'validate_callback' => function($param) { return is_numeric($param); },
+        ),
+      ),
+    ));
   }
   
+  /**
+   * Validate API token for other API clients (Bearer or X-ProjectPlot-Token header).
+   *
+   * @param  \WP_REST_Request $request
+   * @return bool
+   */
+  public function validate_api_token(\WP_REST_Request $request) {
+    $api_token = Utils::get_option('general', 'api_token');
+
+    if (empty($api_token)) {
+      return false;
+    }
+
+    $auth_header = $request->get_header('Authorization');
+    if ($auth_header && preg_match('/Bearer\s+(.+)/', $auth_header, $m)) {
+      return hash_equals($api_token, trim($m[1]));
+    }
+
+    $token_header = $request->get_header('X-ProjectPlot-Token');
+    if ($token_header) {
+      return hash_equals($api_token, $token_header);
+    }
+
+    return false;
+  }
+
   /**
    * Validate token
    *
@@ -356,5 +426,194 @@ class API {
 
     update_post_meta($post_id, '_task_priority', $new_priority);
   }
-  
+
+  /**
+   * Get tasks for other API clients
+   *
+   * @param  \WP_REST_Request $request
+   * @return \WP_REST_Response
+   */
+  public function get_tasks(\WP_REST_Request $request) {
+    $status_filter = $request->get_param('status');
+
+    $args = array(
+      'post_type'      => 'task_dbm',
+      'post_status'    => 'publish',
+      'posts_per_page' => -1,
+      'orderby'        => 'meta_value_num',
+      'meta_key'       => '_task_priority',
+      'order'          => 'ASC',
+    );
+
+    if (!empty($status_filter)) {
+      $args['meta_query'] = array(
+        array(
+          'key'     => '_task_status',
+          'value'   => sanitize_text_field($status_filter),
+          'compare' => '=',
+        ),
+      );
+    }
+
+    $query = new \WP_Query($args);
+    $tasks = array();
+    $statuses = Utils::get_statuses();
+    $priorities = Utils::get_priorities();
+
+    foreach ($query->posts as $post) {
+      $task_status  = get_post_meta($post->ID, '_task_status', true);
+      $task_priority = get_post_meta($post->ID, '_task_priority', true);
+      $tasks[] = array(
+        'id'         => (int) $post->ID,
+        'title'      => $post->post_title,
+        'content'    => $post->post_content,
+        'status'     => $task_status,
+        'status_label' => isset($statuses[$task_status]) ? $statuses[$task_status] : $task_status,
+        'priority'   => $task_priority,
+        'priority_label' => isset($priorities[(int) $task_priority]) ? $priorities[(int) $task_priority] : '',
+        'task_id'    => get_post_meta($post->ID, '_task_id', true),
+        'date'       => $post->post_modified,
+      );
+    }
+
+    return new \WP_REST_Response(array('tasks' => $tasks), 200);
+  }
+
+  /**
+   * Build a single task array from a post (task_dbm).
+   *
+   * @param  \WP_Post $post
+   * @return array
+   */
+  private function task_from_post($post) {
+    $statuses  = Utils::get_statuses();
+    $priorities = Utils::get_priorities();
+    $task_status  = get_post_meta($post->ID, '_task_status', true);
+    $task_priority = get_post_meta($post->ID, '_task_priority', true);
+    return array(
+      'id'            => (int) $post->ID,
+      'title'         => $post->post_title,
+      'content'       => $post->post_content,
+      'status'        => $task_status,
+      'status_label'  => isset($statuses[$task_status]) ? $statuses[$task_status] : $task_status,
+      'priority'      => $task_priority,
+      'priority_label' => isset($priorities[(int) $task_priority]) ? $priorities[(int) $task_priority] : '',
+      'task_id'       => get_post_meta($post->ID, '_task_id', true),
+      'date'          => $post->post_modified,
+    );
+  }
+
+  /**
+   * Get a single task by ID
+   *
+   * @param  \WP_REST_Request $request
+   * @return \WP_REST_Response|\WP_Error
+   */
+  public function get_task(\WP_REST_Request $request) {
+    $id = (int) $request->get_param('id');
+    $post = get_post($id);
+
+    if (!$post || $post->post_type !== 'task_dbm' || $post->post_status !== 'publish') {
+      return new \WP_Error('not_found', __('Task not found.', 'projectplot'), array('status' => 404));
+    }
+
+    return new \WP_REST_Response($this->task_from_post($post), 200);
+  }
+
+  /**
+   * Update a task via API (title, content, status, priority).
+   *
+   * @param  \WP_REST_Request $request
+   * @return \WP_REST_Response|\WP_Error
+   */
+  public function update_task(\WP_REST_Request $request) {
+    $id = (int) $request->get_param('id');
+    $post = get_post($id);
+
+    if (!$post || $post->post_type !== 'task_dbm' || $post->post_status !== 'publish') {
+      return new \WP_Error('not_found', __('Task not found.', 'projectplot'), array('status' => 404));
+    }
+
+    $params = $request->get_json_params();
+    if (!is_array($params)) {
+      $params = array();
+    }
+
+    if (isset($params['title'])) {
+      wp_update_post(array(
+        'ID'         => $id,
+        'post_title' => sanitize_text_field($params['title']),
+      ));
+    }
+
+    if (array_key_exists('content', $params)) {
+      wp_update_post(array(
+        'ID'           => $id,
+        'post_content' => wp_kses_post($params['content']),
+      ));
+    }
+
+    if (isset($params['status'])) {
+      $status = sanitize_text_field($params['status']);
+      if (in_array($status, array('to_do', 'in_progress', 'complete'), true)) {
+        update_post_meta($id, '_task_status', $status);
+      }
+    }
+
+    if (isset($params['priority'])) {
+      $priority = sanitize_text_field($params['priority']);
+      if (in_array($priority, array('1', '2', '3', '4'), true)) {
+        update_post_meta($id, '_task_priority', $priority);
+      }
+    }
+
+    $updated = get_post($id);
+    return new \WP_REST_Response($this->task_from_post($updated), 200);
+  }
+
+  /**
+   * Create a task via API (title required; content, status, priority optional).
+   *
+   * @param  \WP_REST_Request $request
+   * @return \WP_REST_Response|\WP_Error
+   */
+  public function create_task(\WP_REST_Request $request) {
+    $params = $request->get_json_params();
+    if (!is_array($params)) {
+      $params = array();
+    }
+
+    $title = isset($params['title']) ? sanitize_text_field($params['title']) : '';
+    if (empty($title)) {
+      return new \WP_Error('missing_title', __('Title is required.', 'projectplot'), array('status' => 400));
+    }
+
+    $content = isset($params['content']) ? wp_kses_post($params['content']) : '';
+    $status  = isset($params['status']) ? sanitize_text_field($params['status']) : 'to_do';
+    if (!in_array($status, array('to_do', 'in_progress', 'complete'), true)) {
+      $status = 'to_do';
+    }
+    $priority = isset($params['priority']) ? sanitize_text_field($params['priority']) : '3';
+    if (!in_array($priority, array('1', '2', '3', '4'), true)) {
+      $priority = '3';
+    }
+
+    $post_id = wp_insert_post(array(
+      'post_type'    => 'task_dbm',
+      'post_status'  => 'publish',
+      'post_title'   => $title,
+      'post_content' => $content,
+    ));
+
+    if (is_wp_error($post_id)) {
+      return $post_id;
+    }
+
+    update_post_meta($post_id, '_task_status', $status);
+    update_post_meta($post_id, '_task_priority', $priority);
+
+    $post = get_post($post_id);
+    return new \WP_REST_Response($this->task_from_post($post), 201);
+  }
+
 }

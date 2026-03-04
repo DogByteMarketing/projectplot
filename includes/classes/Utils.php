@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot;
 
+if (!defined('ABSPATH')) exit;
+
 class Utils {
 
   /**
@@ -120,7 +122,7 @@ class Utils {
     $statuses = array(
       'to_do'       => 'To Do',
       'in_progress' => 'In Progress',
-      'completed'   => 'Completed',
+      'complete'    => 'Completed',
     );
 
     return $statuses;

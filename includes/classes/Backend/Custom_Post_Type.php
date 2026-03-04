@@ -2,6 +2,8 @@
 
 namespace DogByteMarketing\ProjectPlot\Backend;
 
+if (!defined('ABSPATH')) exit;
+
 use DogByteMarketing\ProjectPlot\Log;
 use DogByteMarketing\ProjectPlot\Utils;
 
