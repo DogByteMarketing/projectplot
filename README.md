@@ -48,5 +48,12 @@ This plugin uses third party services such as the connection to ClickUp via Dog 
 
 ## Changelog
 
+### 1.1.0
+* Added: API so you can access tasks in other applications without going to the backend
+* Bugfix: Completed tasks not showing when filtering by Completed.
+
+### 1.0.1
+* Updated: Translations
+
 ### 1.0.0
-- Initial Release
+* Initial Release
